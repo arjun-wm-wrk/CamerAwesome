@@ -38,7 +38,7 @@ class PictureInPictureConfig {
                     borderRadius: BorderRadius.circular(23),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: Colors.black.withOpacity(opacity),
                         spreadRadius: 10,
                         blurRadius: 20,
                         offset: const Offset(0, 0),
