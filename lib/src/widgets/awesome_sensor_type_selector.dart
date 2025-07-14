@@ -71,7 +71,7 @@ class _AwesomeSensorTypeSelectorState extends State<AwesomeSensorTypeSelector> {
           decoration: BoxDecoration(
             color: _sensorDeviceData != null &&
                     _sensorDeviceData!.availableBackSensors > 1
-                ? Colors.black.withOpacity(0.2),
+                ? Colors.black.withOpacity(0.2)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(30),
           ),
