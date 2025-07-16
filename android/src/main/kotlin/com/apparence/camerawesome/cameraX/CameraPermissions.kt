@@ -11,13 +11,13 @@ import com.apparence.camerawesome.exceptions.PermissionNotDeclaredException
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultListener {
     private var permissionGranted = false
@@ -42,7 +42,9 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
     // PluginRegistry.RequestPermissionsResultListener
     // ---------------------------------------------
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray
+            requestCode: Int,
+            permissions: Array<String>,
+            grantResults: IntArray
     ): Boolean {
         val grantedPermissions = mutableListOf<String>()
         val deniedPermissions = mutableListOf<String>()
@@ -57,8 +59,8 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
         }
         val toRemove = mutableListOf<PermissionRequest>()
         for (c in callbacks) {
-            if (c.permissionsAsked.containsAll(permissions.toList()) && permissions.toList()
-                    .containsAll(c.permissionsAsked)
+            if (c.permissionsAsked.containsAll(permissions.toList()) &&
+                            permissions.toList().containsAll(c.permissionsAsked)
             ) {
                 c.callback(grantedPermissions, deniedPermissions)
                 toRemove.add(c)
@@ -68,25 +70,31 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
 
         if (events != null) {
             Log.d(
-                TAG,
-                "_onRequestPermissionsResult: granted " + java.lang.String.join(", ", *permissions)
+                    TAG,
+                    "_onRequestPermissionsResult: granted " +
+                            java.lang.String.join(", ", *permissions)
             )
             events!!.success(permissionGranted)
         } else {
             Log.d(
-                TAG, "_onRequestPermissionsResult: received permissions but the EventSink is closed"
+                    TAG,
+                    "_onRequestPermissionsResult: received permissions but the EventSink is closed"
             )
         }
         return permissionGranted
     }
 
     fun requestBasePermissions(
-        activity: Activity,
-        saveGps: Boolean,
-        recordAudio: Boolean,
-        callback: (granted: List<String>) -> Unit
+            activity: Activity,
+            saveGps: Boolean,
+            recordAudio: Boolean,
+            callback: (granted: List<String>) -> Unit
     ) {
         val declared = declaredCameraPermissions(activity)
+
+        declared.remove(Manifest.permission.READ_EXTERNAL_STORAGE)
+        declared.remove(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
         // Remove declared permissions not required now
         if (!saveGps) {
             declared.remove(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -110,9 +118,8 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
         val permissionsToAsk: MutableList<String> = ArrayList()
         val permissionsGranted: MutableList<String> = ArrayList()
         for (permission in declared) {
-            if (ContextCompat.checkSelfPermission(
-                    activity, permission
-                ) != PackageManager.PERMISSION_GRANTED
+            if (ContextCompat.checkSelfPermission(activity, permission) !=
+                            PackageManager.PERMISSION_GRANTED
             ) {
                 permissionsToAsk.add(permission)
             } else {
@@ -132,14 +139,13 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
         }
     }
 
-
-    /**
-     * Returns the list of declared camera related permissions
-     */
+    /** Returns the list of declared camera related permissions */
     private fun declaredCameraPermissions(context: Context): MutableList<String> {
-        val packageInfo = context.packageManager.getPackageInfo(
-            context.packageName, PackageManager.GET_PERMISSIONS
-        )
+        val packageInfo =
+                context.packageManager.getPackageInfo(
+                        context.packageName,
+                        PackageManager.GET_PERMISSIONS
+                )
         val permissions = packageInfo.requestedPermissions
         val declaredPermissions = mutableListOf<String>()
         if (permissions.isNullOrEmpty()) return declaredPermissions
@@ -155,9 +161,7 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
     fun hasPermission(activity: Activity, permissions: List<String>): Boolean {
         var granted = true
         for (p in permissions) {
-            if (ContextCompat.checkSelfPermission(
-                    activity, p
-                ) != PackageManager.PERMISSION_GRANTED
+            if (ContextCompat.checkSelfPermission(activity, p) != PackageManager.PERMISSION_GRANTED
             ) {
                 granted = false
                 break
@@ -167,21 +171,19 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
     }
 
     suspend fun requestPermissions(
-        activity: Activity,
-        permissions: List<String>,
-        requestCode: Int,
-        callback: (denied: List<String>) -> Unit
+            activity: Activity,
+            permissions: List<String>,
+            requestCode: Int,
+            callback: (denied: List<String>) -> Unit
     ) {
         val result: List<String> = suspendCoroutine { continuation: Continuation<List<String>> ->
-            ActivityCompat.requestPermissions(
-                activity, permissions.toTypedArray(), requestCode
-            )
+            ActivityCompat.requestPermissions(activity, permissions.toTypedArray(), requestCode)
             callbacks.add(
-                PermissionRequest(UUID.randomUUID().toString(),
-                    permissions,
-                    callback = { granted, _ ->
-                        continuation.resume(granted)
-                    })
+                    PermissionRequest(
+                            UUID.randomUUID().toString(),
+                            permissions,
+                            callback = { granted, _ -> continuation.resume(granted) }
+                    )
             )
         }
         callback(result)
@@ -193,18 +195,19 @@ class CameraPermissions : EventChannel.StreamHandler, RequestPermissionsResultLi
         const val PERMISSION_GEOLOC = 560
         const val PERMISSION_RECORD_AUDIO = 570
 
-        val allPermissions = listOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-        )
+        val allPermissions =
+                listOf(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                )
     }
 }
 
 data class PermissionRequest(
-    var id: String,
-    val permissionsAsked: List<String>,
-    val callback: (permissionsGranted: List<String>, permissionsDenied: List<String>) -> Unit
+        var id: String,
+        val permissionsAsked: List<String>,
+        val callback: (permissionsGranted: List<String>, permissionsDenied: List<String>) -> Unit
 ) {}
